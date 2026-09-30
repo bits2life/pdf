@@ -1,0 +1,72 @@
+{
+    "layout": "portrait-a4",
+    "title": "Proforma Invoice",
+    "sender": "<small><i><b>Example Supplier AB</b><br/>Exempelgatan 1<br/>123 45 Exempelstad<br/>Sweden<br/><em>VAT: SE000000000001</em></i></small>",
+    "storage": [
+      ["<b>Total Rows:</b>", "3"],
+      ["<b>Total Qty:</b>", "12"],
+      ["<b>Payment Terms:</b>", ""]
+    ],
+    "content": [
+      {
+        "type": "reference-data",
+        "rows": [
+          ["<b>Invoice No.:</b>", "100000001"],
+          ["<b>Invoice Date:</b>", "2025-01-15"],
+          ["<b>Shipping Condition:</b>", "Truck - Consolidated"],
+          ["<b>Shipment ID:</b>", "2000001"],
+          ["<b>Date Shipped:</b>", "2025-01-15"],
+          ["<b>Delivery Number:</b>", "3000001"],
+          ["<b>Incoterms:</b>", "FCA Voorbeeld"],
+          ["<b>Customs Clearance:</b>", "Undeclared"],
+          ["<b>Currency:</b>", "USD"]
+        ]
+      }, 8, {
+        "type": "blue",
+        "padding": [20, 0],
+        "content": {
+          "type": "columns",
+          "gap": 50,
+          "columns": [
+            "<small><b>Consignor:</b><br/>Example Manufacturing B.V.<br/>Voorbeeldstraat 10<br/>1234 AB Voorbeeld<br/>Netherlands<br/><em>VAT: NL000000000B01</em></small>",
+            "<small><b>Sold To:</b><br/>Example Customer AB<br/>Provgatan 2<br/>543 21 Provstad<br/>Sweden<br/><em>VAT: SE000000000002</em></small>",
+            "<small><b>Ship To:</b><br/>Example Supplier AB<br/>Exempelgatan 1<br/>123 45 Exempelstad<br/>Sweden<br/><em>VAT: SE000000000001</em></small>"
+          ]
+        }
+      }, 12, {
+        "type": "table",
+        "cols": [
+          { "id": "po", "label": "<b>P.O.</b>", "width": "1.2cm", "align": "left" },
+          { "id": "order_no", "label": "<b>Order No.</b>", "width": "1.7cm", "align": "left" },
+          { "id": "material_no", "label": "<b>Material No.<br/><em>Part No.</em></b>", "width": "2cm", "align": "left" },
+          { "id": "description", "label": "<b>Description</b>", "width": "n", "align": "left" },
+          { "id": "hs_custom_code", "label": "<b>HS Custom<br/>Code</b>", "width": "2cm", "align": "center" },
+          { "id": "country_of_origin", "label": "<b>Country<br/>of Origin</b>", "width": "1.8cm", "align": "center" },
+          { "id": "qty", "label": "<b>Qty</b>", "width": "1cm", "align": "center" },
+          { "id": "unit_price", "label": "<b>Unit Price</b>", "width": "2cm", "align": "right" },
+          { "id": "net_price", "label": "<b>Net Price</b>", "width": "2cm", "align": "right" }
+        ],
+        "rows": [
+          { "po": "1001", "order_no": "500001", "material_no": "ABC1001<br/><em>1234567890</em>", "description": "GEARBOX ASSEMBLY", "hs_custom_code": "1234567890", "country_of_origin": "US", "qty": 4, "unit_price": "123,00", "net_price": "1492,00" },
+          { "po": "1002", "order_no": "500001", "material_no": "ABC1002<br/><em>1234567890</em>", "description": "GEARBOX ASSEMBLY", "hs_custom_code": "1234567890", "country_of_origin": "US", "qty": 4, "unit_price": "123,00", "net_price": "1492,00" }
+        ],
+        "footer": [
+          { "qty": "8", "net_price": "2984,00" }
+        ]
+      },
+      20,
+      {
+        "type": "columns",
+        "gap": 40,
+        "columns": [
+          "<small><b>Material List</b><br/><em>M000001</em></small>",
+          "<small>9000000001<br/>9000000002<br/>9000000003</small>",
+          "<small>9000000004<br/>9000000005<br/>9000000006</small>",
+          "<small>9000000001<br/>9000000002<br/>9000000003</small>",
+          "<small>9000000001<br/>9000000002<br/>9000000003</small>",
+          "<small>9000000004<br/>9000000005</small>"
+        ]
+      }
+    ]
+  }
+  

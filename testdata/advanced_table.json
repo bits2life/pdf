@@ -1,0 +1,94 @@
+{
+  "layout": "portrait-a4",
+  "title": "Advanced Table Column Width Demo",
+  "content": [
+    {
+      "type": "reference-data",
+      "rows": [
+        ["<b>Demo:</b>", "Advanced Column Width Specifications"],
+        ["<b>Features:</b>", "Fixed units (mm, pt, cm, in), Percentages (%), Flexible units (n, 2n, etc.)"]
+      ]
+    },
+    {
+      "type": "table",
+      "cols": [
+        { "id": "code", "label": "Product Code", "width": "20mm", "align": "left" },
+        { "id": "name", "label": "Product Name", "width": "n", "align": "left" },
+        { "id": "category", "label": "Category", "width": "15%", "align": "left" },
+        { "id": "price", "label": "Price", "width": "50pt", "align": "right" },
+        { "id": "stock", "label": "Stock", "width": "1.5cm", "align": "right" },
+        { "id": "notes", "label": "Notes", "width": "2n", "align": "left" }
+      ],
+      "rows": [
+        { 
+          "code": "PRD001", 
+          "name": "Professional Laptop", 
+          "category": "Electronics", 
+          "price": "$1,299.99", 
+          "stock": "25", 
+          "notes": "High-performance laptop with 16GB RAM and SSD storage" 
+        },
+        { 
+          "code": "PRD002", 
+          "name": "Wireless Mouse", 
+          "category": "Accessories", 
+          "price": "$29.99", 
+          "stock": "150", 
+          "notes": "Ergonomic design with precision tracking" 
+        },
+        { 
+          "code": "PRD003", 
+          "name": "USB-C Hub", 
+          "category": "Accessories", 
+          "price": "$79.99", 
+          "stock": "45", 
+          "notes": "Multi-port hub with HDMI, USB 3.0, and power delivery" 
+        }
+      ],
+      "footer": [
+        { "name": "Total Items:", "stock": "220", "price": "$1,409.97" }
+      ]
+    },
+    "<b>Width Specification Breakdown:</b>",
+    {
+      "type": "reference-data",
+      "rows": [
+        ["<b>Product Code:</b>", "20mm (fixed width in millimeters)"],
+        ["<b>Product Name:</b>", "n (flexible unit, gets 1 part of remaining space)"],
+        ["<b>Category:</b>", "15% (15% of total table width)"],
+        ["<b>Price:</b>", "50pt (fixed width in points)"],
+        ["<b>Stock:</b>", "1.5cm (fixed width in centimeters)"],
+        ["<b>Notes:</b>", "2n (flexible unit, gets 2 parts of remaining space)"]
+      ]
+    },
+    {
+      "type": "table",
+      "cols": [
+        { "id": "spec", "label": "Width Spec", "width": "25%", "align": "left" },
+        { "id": "type", "label": "Type", "width": "20%", "align": "left" },
+        { "id": "description", "label": "Description", "width": "n", "align": "left" },
+        { "id": "example", "label": "Examples", "width": "30%", "align": "left" }
+      ],
+      "rows": [
+        { 
+          "spec": "Fixed Units", 
+          "type": "Absolute", 
+          "description": "Exact measurements in physical units", 
+          "example": "15mm, 65pt, 2.5cm, 1in" 
+        },
+        { 
+          "spec": "Percentages", 
+          "type": "Relative", 
+          "description": "Percentage of total available width", 
+          "example": "10%, 25%, 50%" 
+        },
+        { 
+          "spec": "Flexible Units", 
+          "type": "Proportional", 
+          "description": "Remaining space divided proportionally", 
+          "example": "n, 2n, 1.5n, 0.5n" 
+        }
+      ]
+    }
+  ]
+} 
