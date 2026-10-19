@@ -113,13 +113,17 @@ func (rt *RichText) Measure(maxWidth, maxHeight Unit) (w, h Unit, overflow *Rich
 	for i := 0; i < len(rt.blocks); i++ {
 		measurement := rt.measurements[i]
 
-		if measurement.Overflow {
-			// fmt.Println("Overflow", i, measurement.Width, measurement.Height)
-			// fmt.Printf("%v\n", rt.blocks[i])
-		}
-
-		if measurement.Overflow || totalH+measurement.Height > maxHeight {
+		// Blocks are measured at unlimited height, so an overflowing block is a NoWrap line wider
+		// than maxWidth. More space below can't fix that, so it isn't split off to the next page
+		// (which would never end): the line takes the full width and is drawn past the edge.
+		if totalH+measurement.Height > maxHeight {
 			rt.overflowBlock = i
+
+			// When nothing fits, report no size at all (not even padding), so that callers can
+			// tell that placing this text makes no progress.
+			if i == 0 {
+				totalW, totalH, padW, padH = 0, 0, 0, 0
+			}
 
 			// Create new RichText instance with remaining content
 			if i < len(rt.blocks) {
@@ -143,7 +147,7 @@ func (rt *RichText) Measure(maxWidth, maxHeight Unit) (w, h Unit, overflow *Rich
 			return totalW + padW, totalH + padH, nil
 		}
 
-		totalW = totalW.Max(measurement.Width)
+		totalW = totalW.Max(measurement.Width.Min(maxWidth - padW))
 		totalH += measurement.Height
 	}
 

@@ -90,7 +90,11 @@ func (dl *DocumentLayout) LayoutPages(source func() ContentBlock) error {
 	for blk != nil {
 		measurement := MeasureBlock(blk, contentWidth, space)
 
-		if measurement.Height > space {
+		// A block that takes no height yet leaves a remainder made no progress here: placing it
+		// would only hand back the same content forever. Try it on a fresh page instead.
+		noProgress := measurement.Remain != nil && measurement.Height <= 0
+
+		if measurement.Height > space || noProgress {
 			if space == fullPageSpace {
 				return fmt.Errorf("Unbreakable (and too tall) content on page %d", page.pageNum)
 			} else {
