@@ -35,7 +35,14 @@ data, err := r.Bytes()
 ```
 
 Only the PDF core fonts (Helvetica, Times, Courier, Symbol, ZapfDingbats) are
-used; no font files are bundled. Text is encoded as Windows-1252.
+used; no font files are bundled. Text is encoded as Windows-1252 for both
+drawing and measuring; characters outside Windows-1252 are drawn as `?`.
+
+Since the core fonts are not embedded, the viewer supplies them. poppler
+(`pdftoppm`, `pdftotext`) on macOS substitutes the regular face of the system
+Helvetica for Helvetica-Bold, so bold text previews as regular with bold
+spacing. The PDF itself is correct (`pdffonts` lists Helvetica-Bold), and
+Preview renders it bold.
 
 See [report/README.md](report/README.md) for the layout model.
 

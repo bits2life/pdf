@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"math"
+	"unicode/utf8"
 
 	"github.com/jung-kurt/gofpdf"
 	"golang.org/x/text/encoding/charmap"
@@ -340,12 +341,11 @@ func (d *Document) layoutRichTextBlock(block Block, maxWidth, maxHeight Unit, st
 func (d *Document) createTextSegment(text string, style *Style) LayoutSegment {
 	// Set font for measurement
 	d.pdf.SetFont(style.Font, style.getVariant(), style.Size.Pt())
-	width := d.pdf.GetStringWidth(text)
 
 	return LayoutSegment{
 		Text:  text,
 		Style: style,
-		Width: Unit(width),
+		Width: stringWidth(d.pdf, text),
 	}
 }
 
@@ -358,12 +358,11 @@ func (d *Document) createTruncatedSegment(text string, style *Style, maxWidth Un
 	}
 
 	truncated := truncateTextToWidth(text, maxWidth, d.pdf)
-	width := d.pdf.GetStringWidth(truncated)
 
 	return LayoutSegment{
 		Text:  truncated,
 		Style: style,
-		Width: Unit(width),
+		Width: stringWidth(d.pdf, truncated),
 	}
 }
 
@@ -378,7 +377,7 @@ func (d *Document) layoutTextWithWrapping(text string, style *Style, maxWidth Un
 	d.pdf.SetFont(style.Font, style.getVariant(), style.Size.Pt())
 
 	words := splitIntoWords(text)
-	spaceWidth := Unit(d.pdf.GetStringWidth(" "))
+	spaceWidth := stringWidth(d.pdf, " ")
 
 	for i, word := range words {
 		wordSegment := d.createTextSegment(word, style)
@@ -419,8 +418,8 @@ func (d *Document) layoutTextWithEllipsis(text string, style *Style, maxWidth Un
 	// Set font for measurement
 	d.pdf.SetFont(style.Font, style.getVariant(), style.Size.Pt())
 
-	textWidth := Unit(d.pdf.GetStringWidth(text))
-	ellipsisWidth := Unit(d.pdf.GetStringWidth("..."))
+	textWidth := stringWidth(d.pdf, text)
+	ellipsisWidth := stringWidth(d.pdf, "...")
 
 	if currentLine.Width+textWidth <= maxWidth {
 		segment := d.createTextSegment(text, style)
@@ -491,13 +490,28 @@ func (d *Document) DrawRichTextBlock(c Canvas, block Block, x, y, maxWidth, maxH
 	}
 }
 
+// ConvertToCP1252 encodes UTF-8 text as Windows-1252, the encoding gofpdf uses
+// for the core fonts. Runes that Windows-1252 cannot represent become '?'.
 func ConvertToCP1252(text string) string {
-	encoder := charmap.Windows1252.NewEncoder()
-	win1252Str, err := encoder.String(text)
-	if err != nil {
-		panic(err)
+	out := make([]byte, 0, len(text))
+	for _, r := range text {
+		if r < utf8.RuneSelf {
+			out = append(out, byte(r))
+		} else if b, ok := charmap.Windows1252.EncodeRune(r); ok {
+			out = append(out, b)
+		} else {
+			out = append(out, '?')
+		}
 	}
-	return win1252Str
+	return string(out)
+}
+
+// stringWidth measures UTF-8 text in the current font. gofpdf's core fonts sum
+// glyph widths per byte, so the text must be measured as the Windows-1252 bytes
+// that are actually drawn; measuring the UTF-8 bytes counts each å, ä or ö as
+// two glyphs.
+func stringWidth(pdf *gofpdf.Fpdf, text string) Unit {
+	return Unit(pdf.GetStringWidth(ConvertToCP1252(text)))
 }
 
 // Helper function to split text into words
@@ -529,14 +543,14 @@ func splitIntoWords(text string) []string {
 
 // Helper function to truncate text to fit within specified width
 func truncateTextToWidth(text string, maxWidth Unit, pdf *gofpdf.Fpdf) string {
-	if Unit(pdf.GetStringWidth(text)) <= maxWidth {
+	if stringWidth(pdf, text) <= maxWidth {
 		return text
 	}
 
 	runes := []rune(text)
 	for i := len(runes) - 1; i >= 0; i-- {
 		truncated := string(runes[:i])
-		if Unit(pdf.GetStringWidth(truncated)) <= maxWidth {
+		if stringWidth(pdf, truncated) <= maxWidth {
 			return truncated
 		}
 	}
