@@ -79,10 +79,11 @@ func (c Canvas) SetFont(family, style string, size Unit) {
 
 // TextWidth returns the width of a single line of text.
 func (c Canvas) TextWidth(text string) Unit {
-	return Unit(c.page.doc.pdf.GetStringWidth(text))
+	return stringWidth(c.page.doc.pdf, text)
 }
 
-// DrawText draws a single line of text at (x, y) relative to this Canvas origin.
+// DrawText draws a single line of UTF-8 text at (x, y) relative to this Canvas
+// origin.
 func (c Canvas) DrawText(x, y Unit, text string) {
-	c.page.doc.pdf.Text((c.x + x).Pt(), (c.y + y).Pt(), text)
+	c.page.doc.pdf.Text((c.x + x).Pt(), (c.y + y).Pt(), ConvertToCP1252(text))
 }
