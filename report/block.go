@@ -47,14 +47,16 @@ func (r *Report) WithPadding(padding ...Unit) *Report {
 	return r
 }
 
-func (r *Report) Layout(source func() ContentBlock) {
+// Layout plans the pages for the blocks that source returns, until it returns nil. It fails when
+// a block cannot be placed even on an empty page.
+func (r *Report) Layout(source func() ContentBlock) error {
 	r.layout = NewDocumentLayout(
 		r.doc,
 		r.contentPadding,
 		r.headerFunc, r.footerFunc,
 	)
 
-	r.layout.LayoutPages(source)
+	return r.layout.LayoutPages(source)
 }
 
 func (r *Report) PageCount() int {
@@ -121,6 +123,9 @@ func (b *TextBlock) Draw(canvas pdf.Canvas, x, y, maxWidth, maxHeight Unit) erro
 // ------------------------------------------------------------------------------------------------
 type CompositeBlock struct {
 	Blocks []ContentBlock
+
+	// Heights of the blocks that fit in the last Measure, which Draw draws.
+	heights []Unit
 }
 
 func (r *Report) Composite(blocks ...ContentBlock) ContentBlock {
@@ -129,11 +134,21 @@ func (r *Report) Composite(blocks ...ContentBlock) ContentBlock {
 
 func (b *CompositeBlock) Measure(maxWidth, maxHeight Unit) (usedW, usedH Unit, remain ContentBlock) {
 	var totalHeight Unit
-	for _, block := range b.Blocks {
+	b.heights = b.heights[:0]
+	for i, block := range b.Blocks {
 		w, h, r := block.Measure(maxWidth, maxHeight-totalHeight)
+		if i > 0 && r == nil && h > maxHeight-totalHeight {
+			// Doesn't fit below the blocks before it: move it, and the rest, on.
+			return usedW, totalHeight, &CompositeBlock{Blocks: b.Blocks[i:]}
+		}
 		usedW = usedW.Max(w)
 		totalHeight += h
+		b.heights = append(b.heights, h)
 		if r != nil {
+			// The rest of this block goes first, followed by the blocks after it.
+			if rest := b.Blocks[i+1:]; len(rest) > 0 {
+				r = &CompositeBlock{Blocks: append([]ContentBlock{r}, rest...)}
+			}
 			return usedW, totalHeight, r
 		}
 	}
@@ -141,12 +156,14 @@ func (b *CompositeBlock) Measure(maxWidth, maxHeight Unit) (usedW, usedH Unit, r
 }
 
 func (b *CompositeBlock) Draw(canvas pdf.Canvas, x, y, maxWidth, maxHeight Unit) error {
+	if b.heights == nil {
+		b.Measure(maxWidth, maxHeight)
+	}
 	var offsetY Unit
-	for _, block := range b.Blocks {
-		if err := block.Draw(canvas, x, y+offsetY, maxWidth, maxHeight-offsetY); err != nil {
+	for i, h := range b.heights {
+		if err := b.Blocks[i].Draw(canvas, x, y+offsetY, maxWidth, maxHeight-offsetY); err != nil {
 			return err
 		}
-		_, h, _ := block.Measure(maxWidth, maxHeight-offsetY)
 		offsetY += h
 	}
 	return nil
