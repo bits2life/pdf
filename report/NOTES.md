@@ -2,6 +2,16 @@
 
 Nonobvious properties of the module. When you notice your intuition is wrong, add a note here.
 
+## KeepTogether
+
+`KeepTogether` is a `Composite` that prefers not to split. Layout records the
+current content-area height on groups in the tree before measuring. Measure
+then treats leftover space and a fresh page differently: if the group fits on
+that page height but not in the height it was given, it reports no progress so
+the group moves. If the group is taller than a page, it splits like
+`Composite`. Without a bound page height (direct `Measure` calls), it splits
+like `Composite`.
+
 ## Fixed Bugs
 
 ### DivBlock background extends beyond content area (2025-01-29)

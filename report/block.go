@@ -170,6 +170,66 @@ func (b *CompositeBlock) Draw(canvas pdf.Canvas, x, y, maxWidth, maxHeight Unit)
 }
 
 // ------------------------------------------------------------------------------------------------
+// KeepTogetherBlock
+//
+// Groups blocks so they move to the next page when they fit on a fresh page
+// but not in the remaining space. If the group is taller than a page, it
+// splits like CompositeBlock.
+// ------------------------------------------------------------------------------------------------
+
+// KeepTogetherBlock is a CompositeBlock that prefers not to split across pages
+// when the whole group fits on one page.
+type KeepTogetherBlock struct {
+	CompositeBlock
+	pageHeight Unit
+}
+
+// KeepTogether groups blocks so a heading-plus-first-body pair, a signature,
+// or any other run stays on one page when it fits. Nested and adjacent groups
+// are supported.
+func (r *Report) KeepTogether(blocks ...ContentBlock) ContentBlock {
+	return &KeepTogetherBlock{CompositeBlock: CompositeBlock{Blocks: blocks}}
+}
+
+func (b *KeepTogetherBlock) KeepTogetherHint() bool { return true }
+
+func (b *KeepTogetherBlock) Measure(maxWidth, maxHeight Unit) (usedW, usedH Unit, remain ContentBlock) {
+	usedW, usedH, remain = b.CompositeBlock.Measure(maxWidth, maxHeight)
+	if remain == nil {
+		return usedW, usedH, nil
+	}
+	// Does not fit here. Move the whole group if a fresh page would hold it;
+	// otherwise split so a group taller than a page cannot loop or vanish.
+	if b.pageHeight > 0 && maxHeight < b.pageHeight && b.fits(maxWidth, b.pageHeight) {
+		return 0, 0, b
+	}
+	return usedW, usedH, keepTogetherRemain(remain, b.pageHeight)
+}
+
+func (b *KeepTogetherBlock) fits(maxWidth, height Unit) bool {
+	probe := KeepTogetherBlock{CompositeBlock: CompositeBlock{Blocks: b.Blocks}}
+	_, h, remain := probe.CompositeBlock.Measure(maxWidth, height)
+	return remain == nil && h <= height
+}
+
+func keepTogetherRemain(remain ContentBlock, pageHeight Unit) ContentBlock {
+	switch r := remain.(type) {
+	case nil:
+		return nil
+	case *KeepTogetherBlock:
+		r.pageHeight = pageHeight
+		return r
+	case *CompositeBlock:
+		return &KeepTogetherBlock{CompositeBlock: *r, pageHeight: pageHeight}
+	default:
+		return &KeepTogetherBlock{
+			CompositeBlock: CompositeBlock{Blocks: []ContentBlock{r}},
+			pageHeight:     pageHeight,
+		}
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
 // LeftRightBlock
 //
 // Combines two blocks into a single block that will draw the two blocks side by side, one
