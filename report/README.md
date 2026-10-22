@@ -14,6 +14,23 @@ With an initialized theme, the application can generate PDF documents from a JSO
 Block types may optionally implement page-breaking logic, or they will be added to the first page
 with sufficient space.
 
+`Report.KeepTogether` groups blocks so they move to the next page when the
+group fits on a fresh page but not in the remaining space. A heading plus the
+first body block, or a signature that must stay intact:
+
+```go
+r.KeepTogether(r.Text("<h2>Agenda</h2>"), firstParagraph)
+r.KeepTogether(signature)
+```
+
+If the group is taller than a page, it splits like `Composite` so layout
+cannot loop or drop content. Nested and adjacent groups are supported.
+A `ContentBlock` may also implement `KeepTogetherHint() bool` to opt into the
+same page-break behavior without wrapping.
+
+Keep-together is honored for the current flow block and for groups nested in
+`Composite`, `Div`, and the other built-in containers.
+
 
 ## Block content
 

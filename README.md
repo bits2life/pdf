@@ -44,7 +44,8 @@ Helvetica for Helvetica-Bold, so bold text previews as regular with bold
 spacing. The PDF itself is correct (`pdffonts` lists Helvetica-Bold), and
 Preview renders it bold.
 
-See [report/README.md](report/README.md) for the layout model.
+See [report/README.md](report/README.md) for the layout model, including
+`KeepTogether` for groups that should move to the next page rather than split.
 
 ## Development
 

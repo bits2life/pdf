@@ -9,8 +9,11 @@ import (
 type ContentBlock interface {
 	Measure(maxWidth, maxHeight Unit) (w, h Unit, remain ContentBlock)
 	Draw(canvas pdf.Canvas, x, y, maxWidth, maxHeight Unit) error
-	// Consider adding KeepTogetherHint() for additional layout control
 }
+
+// A ContentBlock may implement KeepTogetherHint() bool. When it returns true,
+// layout moves the block to the next page if it fits there but not in the
+// remaining space. Blocks taller than a page still split.
 
 type LayoutFunc func(maxWidth Unit, pageNum int) ContentBlock
 
@@ -88,6 +91,18 @@ func (dl *DocumentLayout) LayoutPages(source func() ContentBlock) error {
 
 	blk := source()
 	for blk != nil {
+		bindKeepTogetherPageHeight(blk, fullPageSpace)
+
+		// Optional KeepTogetherHint: if the block would split here but fits on a
+		// fresh page, move it. Taller-than-page blocks fall through and split.
+		if prefersKeepTogether(blk) && space < fullPageSpace {
+			full := MeasureBlock(blk, contentWidth, fullPageSpace)
+			if full.Remain == nil && full.Height > space && full.Height <= fullPageSpace {
+				AddPage()
+				continue
+			}
+		}
+
 		measurement := MeasureBlock(blk, contentWidth, space)
 
 		// A block that takes no height yet leaves a remainder made no progress here: placing it
@@ -163,4 +178,42 @@ func (dl *DocumentLayout) renderPage(p *PagePlan) error {
 
 func (dl *DocumentLayout) PageCount() int {
 	return len(dl.pages)
+}
+
+func prefersKeepTogether(block ContentBlock) bool {
+	type hinter interface{ KeepTogetherHint() bool }
+	if h, ok := block.(hinter); ok {
+		return h.KeepTogetherHint()
+	}
+	return false
+}
+
+// bindKeepTogetherPageHeight records the current content-area height on
+// KeepTogether groups in the tree so Measure can tell leftover space from a
+// fresh page.
+func bindKeepTogetherPageHeight(block ContentBlock, pageHeight Unit) {
+	switch b := block.(type) {
+	case *KeepTogetherBlock:
+		b.pageHeight = pageHeight
+		for _, child := range b.Blocks {
+			bindKeepTogetherPageHeight(child, pageHeight)
+		}
+	case *CompositeBlock:
+		for _, child := range b.Blocks {
+			bindKeepTogetherPageHeight(child, pageHeight)
+		}
+	case *DivBlock:
+		for _, child := range b.Children {
+			bindKeepTogetherPageHeight(child, pageHeight)
+		}
+	case *ColumnsBlock:
+		for _, child := range b.columns {
+			bindKeepTogetherPageHeight(child, pageHeight)
+		}
+	case *LeftRightBlock:
+		bindKeepTogetherPageHeight(b.left, pageHeight)
+		bindKeepTogetherPageHeight(b.right, pageHeight)
+	case *DynamicBlock:
+		bindKeepTogetherPageHeight(b.getBlock(), pageHeight)
+	}
 }
